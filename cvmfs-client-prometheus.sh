@@ -12,7 +12,7 @@ cleanup_tmpfile() {
 trap cleanup_tmpfile EXIT
 
 # CVMFS Extended Attributes and their descriptions
-declare -A CVMFS_EXTENDED_ATTRIBUTE_GAGUES=(
+declare -A CVMFS_EXTENDED_ATTRIBUTE_GAUGES=(
     ['hitrate']='CVMFS cache hit rate (%)'
     ['inode_max']='Shows the highest possible inode with the current set of loaded catalogs.'
     ['maxfd']='Shows the maximum number of file descriptors available to file system clients.'
@@ -71,7 +71,7 @@ fqrn_for_cvmfs_repo() {
     attr -g fqrn "${repopath}" | tail -n +2
 }
 
-get_cvmfs_repo_extended_attribute_gague_metrics() {
+get_cvmfs_repo_extended_attribute_gauge_metrics() {
     local reponame
     reponame="$1"
 
@@ -82,10 +82,10 @@ get_cvmfs_repo_extended_attribute_gague_metrics() {
     fqrn=$(fqrn_for_cvmfs_repo "${reponame}")
 
     local attribute
-    for attribute in "${!CVMFS_EXTENDED_ATTRIBUTE_GAGUES[@]}"; do
+    for attribute in "${!CVMFS_EXTENDED_ATTRIBUTE_GAUGES[@]}"; do
         local result
         result=$(attr -g "${attribute}" "${repomountpoint}" | tail -n +2)
-        generate_metric "cvmfs_${attribute}" 'gague' "${CVMFS_EXTENDED_ATTRIBUTE_GAGUES[${attribute}]}" "repo=${fqrn}" "${result}"
+        generate_metric "cvmfs_${attribute}" 'gauge' "${CVMFS_EXTENDED_ATTRIBUTE_GAUGES[${attribute}]}" "repo=\"${fqrn}\"" "${result}"
     done
 }
 
@@ -117,7 +117,7 @@ get_cvmfs_repo_proxy_metrics() {
                 break
             fi
         done
-        generate_metric "cvmfs_proxy" "gague" "Shows all registered proxies for this repository." "repo=${fqrn},group=${my_proxy_group},url=${proxy}" 1
+        generate_metric "cvmfs_proxy" "gauge" "Shows all registered proxies for this repository." "repo=\"${fqrn}\",group=\"${my_proxy_group}\",url=\"${proxy}\"" 1
     done
 }
 
@@ -139,37 +139,37 @@ get_cvmfs_repo_metrics() {
 
     local cached_bytes
     cached_bytes=$(cvmfs_talk -i "${reponame}" cache size | tr -d ')(' | tr -s '[:space:]' | cut -d ' ' -f 6)
-    generate_metric 'cvmfs_cached_bytes' 'gauge' 'CVMFS currently cached bytes.' "repo=${fqrn}" "${cached_bytes}"
+    generate_metric 'cvmfs_cached_bytes' 'gauge' 'CVMFS currently cached bytes.' "repo=\"${fqrn}\"" "${cached_bytes}"
 
     local pinned_bytes
     pinned_bytes=$(cvmfs_talk -i "${reponame}" cache size | tr -d ')(' | tr -s '[:space:]' | cut -d ' ' -f 10)
-    generate_metric 'cvmfs_pinned_bytes' 'gauge' 'CVMFS currently pinned bytes.' "repo=${fqrn}" "${pinned_bytes}"
+    generate_metric 'cvmfs_pinned_bytes' 'gauge' 'CVMFS currently pinned bytes.' "repo=\"${fqrn}\"" "${pinned_bytes}"
 
     local total_cache_size_mb
     total_cache_size_mb=$(cvmfs_talk -i "${reponame}" parameters | grep CVMFS_QUOTA_LIMIT | tr '=' ' ' | tr -s '[:space:]' | cut -d ' ' -f 2)
     local total_cache_size
     total_cache_size=$((total_cache_size_mb * 1024 * 1024))
-    generate_metric 'cvmfs_total_cache_size_bytes' 'gague' 'CVMFS configured cache size via CVMFS_QUOTA_LIMIT.' "repo=${fqrn}" "${total_cache_size}"
+    generate_metric 'cvmfs_total_cache_size_bytes' 'gauge' 'CVMFS configured cache size via CVMFS_QUOTA_LIMIT.' "repo=\"${fqrn}\"" "${total_cache_size}"
 
     local cache_volume_max
     cache_volume_max=$(df -B1 "${cache_volume}" | tail -n 1 | tr -s '[:space:]' | cut -d ' ' -f 2)
-    generate_metric 'cvmfs_physical_cache_size_bytes' 'gague' 'CVMFS cache volume physical size.' "repo=${fqrn}" "${cache_volume_max}"
+    generate_metric 'cvmfs_physical_cache_size_bytes' 'gauge' 'CVMFS cache volume physical size.' "repo=\"${fqrn}\"" "${cache_volume_max}"
 
     local cache_volume_free
     cache_volume_free=$(df -B1 "${cache_volume}" | tail -n 1 | tr -s '[:space:]' | cut -d ' ' -f 4)
-    generate_metric 'cvmfs_physical_cache_avail_bytes' 'gague' 'CVMFS cache volume physical free space available.' "repo=${fqrn}" "${cache_volume_free}"
+    generate_metric 'cvmfs_physical_cache_avail_bytes' 'gauge' 'CVMFS cache volume physical free space available.' "repo=\"${fqrn}\"" "${cache_volume_free}"
 
     local cvmfs_mount_version
     cvmfs_mount_version=$(attr -g version "${repomountpoint}" | tail -n +2)
     local cvmfs_mount_revision
     cvmfs_mount_revision=$(attr -g revision "${repomountpoint}" | tail -n +2)
-    generate_metric 'cvmfs_repo' 'guage' 'Shows the version of CVMFS used by this repository.' "repo=${fqrn},mountpoint=${repomountpoint},version=${cvmfs_mount_version},revision=${cvmfs_mount_revision}" 1
+    generate_metric 'cvmfs_repo' 'gauge' 'Shows the version of CVMFS used by this repository.' "repo=\"${fqrn}\",mountpoint=\"${repomountpoint}\",version=\"${cvmfs_mount_version}\",revision=\"${cvmfs_mount_revision}\"" 1
 
     local cvmfs_mount_rx_kb
     cvmfs_mount_rx_kb=$(attr -g rx "${repomountpoint}" | tail -n +2)
     local cvmfs_mount_rx
     cvmfs_mount_rx=$((cvmfs_mount_rx_kb * 1024))
-    generate_metric 'cvmfs_rx_total' 'counter' 'Shows the overall amount of downloaded bytes since mounting.' "repo=${fqrn}" "${cvmfs_mount_rx}"
+    generate_metric 'cvmfs_rx_total' 'counter' 'Shows the overall amount of downloaded bytes since mounting.' "repo=\"${fqrn}\"" "${cvmfs_mount_rx}"
 
     local cvmfs_mount_uptime_minutes
     cvmfs_mount_uptime_minutes=$(attr -g uptime "${repomountpoint}" | tail -n +2)
@@ -181,34 +181,34 @@ get_cvmfs_repo_metrics() {
     rounded_now_to_minute=$((now - (now % 60)))
     cvmfs_mount_uptime=$((cvmfs_mount_uptime_minutes * 60))
     cvmfs_mount_epoch_time=$((rounded_now_to_minute - cvmfs_mount_uptime))
-    generate_metric 'cvmfs_uptime_seconds' 'counter' 'Shows the time since the repo was mounted.' "repo=${fqrn}" "${cvmfs_mount_uptime}"
-    generate_metric 'cvmfs_mount_epoch_timestamp' 'counter' 'Shows the epoch time the repo was mounted.' "repo=${fqrn}" "${cvmfs_mount_epoch_time}"
+    generate_metric 'cvmfs_uptime_seconds' 'counter' 'Shows the time since the repo was mounted.' "repo=\"${fqrn}\"" "${cvmfs_mount_uptime}"
+    generate_metric 'cvmfs_mount_epoch_timestamp' 'counter' 'Shows the epoch time the repo was mounted.' "repo=\"${fqrn}\"" "${cvmfs_mount_epoch_time}"
 
     local cvmfs_repo_expires_min
     cvmfs_repo_expires_min=$(attr -g expires "${repomountpoint}" | tail -n +2)
     local cvmfs_repo_expires
     cvmfs_repo_expires=$((cvmfs_repo_expires_min * 60))
-    generate_metric 'cvmfs_repo_expires_seconds' 'gague' 'Shows the remaining life time of the mounted root file catalog in seconds.' "repo=${fqrn}" "${cvmfs_repo_expires}"
+    generate_metric 'cvmfs_repo_expires_seconds' 'gauge' 'Shows the remaining life time of the mounted root file catalog in seconds.' "repo=\"${fqrn}\"" "${cvmfs_repo_expires}"
 
     local cvmfs_mount_ndownload
     cvmfs_mount_ndownload=$(attr -g ndownload "${repomountpoint}" | tail -n +2)
-    generate_metric 'cvmfs_ndownload_total' 'counter' 'Shows the overall number of downloaded files since mounting.' "repo=${fqrn}" "${cvmfs_mount_ndownload}"
+    generate_metric 'cvmfs_ndownload_total' 'counter' 'Shows the overall number of downloaded files since mounting.' "repo=\"${fqrn}\"" "${cvmfs_mount_ndownload}"
 
     local cvmfs_mount_nioerr
     cvmfs_mount_nioerr=$(attr -g nioerr "${repomountpoint}" | tail -n +2)
-    generate_metric 'cvmfs_nioerr_total' 'counter' 'Shows the total number of I/O errors encountered since mounting.' "repo=${fqrn}" "${cvmfs_mount_nioerr}"
+    generate_metric 'cvmfs_nioerr_total' 'counter' 'Shows the total number of I/O errors encountered since mounting.' "repo=\"${fqrn}\"" "${cvmfs_mount_nioerr}"
 
     local cvmfs_mount_timeout
     cvmfs_mount_timeout=$(attr -g timeout "${repomountpoint}" | tail -n +2)
-    generate_metric 'cvmfs_timeout' 'guage' 'Shows the timeout for proxied connections in seconds.' "repo=${fqrn}" "${cvmfs_mount_timeout}"
+    generate_metric 'cvmfs_timeout' 'gauge' 'Shows the timeout for proxied connections in seconds.' "repo=\"${fqrn}\"" "${cvmfs_mount_timeout}"
 
     local cvmfs_mount_timeout_direct
     cvmfs_mount_timeout_direct=$(attr -g timeout_direct "${repomountpoint}" | tail -n +2)
-    generate_metric 'cvmfs_timeout_direct' 'guage' 'Shows the timeout for direct connections in seconds.' "repo=${fqrn}" "${cvmfs_mount_timeout_direct}"
+    generate_metric 'cvmfs_timeout_direct' 'gauge' 'Shows the timeout for direct connections in seconds.' "repo=\"${fqrn}\"" "${cvmfs_mount_timeout_direct}"
 
     local cvmfs_mount_timestamp_last_ioerr
     cvmfs_mount_timestamp_last_ioerr=$(attr -g timestamp_last_ioerr "${repomountpoint}" | tail -n +2)
-    generate_metric 'cvmfs_timestamp_last_ioerr' 'counter' 'Shows the timestamp of the last ioerror.' "repo=${fqrn}" "${cvmfs_mount_timestamp_last_ioerr}"
+    generate_metric 'cvmfs_timestamp_last_ioerr' 'counter' 'Shows the timestamp of the last ioerror.' "repo=\"${fqrn}\"" "${cvmfs_mount_timestamp_last_ioerr}"
 
     local cvmfs_repo_pid_statline
     cvmfs_repo_pid_statline=$(</proc/"${repo_pid}"/stat)
@@ -222,15 +222,15 @@ get_cvmfs_repo_metrics() {
     local cvmfs_system_seconds
     cvmfs_user_seconds=$(printf "%.2f" "$(echo "scale=4; $cvmfs_utime / $CLOCK_TICK" | bc)")
     cvmfs_system_seconds=$(printf "%.2f" "$(echo "scale=4; $cvmfs_stime / $CLOCK_TICK" | bc)")
-    generate_metric 'cvmfs_cpu_user_total' 'counter' 'CPU time used in userspace by CVMFS mount in seconds.' "repo=${fqrn}" "${cvmfs_user_seconds}"
-    generate_metric 'cvmfs_cpu_system_total' 'counter' 'CPU time used in the kernel system calls by CVMFS mount in seconds.' "repo=${fqrn}" "${cvmfs_system_seconds}"
+    generate_metric 'cvmfs_cpu_user_total' 'counter' 'CPU time used in userspace by CVMFS mount in seconds.' "repo=\"${fqrn}\"" "${cvmfs_user_seconds}"
+    generate_metric 'cvmfs_cpu_system_total' 'counter' 'CPU time used in the kernel system calls by CVMFS mount in seconds.' "repo=\"${fqrn}\"" "${cvmfs_system_seconds}"
 
     local cvmfs_mount_active_proxy
     cvmfs_mount_active_proxy=$(attr -g proxy "${repomountpoint}" | tail -n +2)
-    generate_metric 'cvmfs_active_proxy' 'gauge' 'Shows the active proxy in use for this mount.' "repo=${fqrn},proxy=${cvmfs_mount_active_proxy}" 1
+    generate_metric 'cvmfs_active_proxy' 'gauge' 'Shows the active proxy in use for this mount.' "repo=\"${fqrn}\",proxy=\"${cvmfs_mount_active_proxy}\"" 1
 
     # Pull in xattr based metrics with simple labels
-    get_cvmfs_repo_extended_attribute_gague_metrics "${reponame}"
+    get_cvmfs_repo_extended_attribute_gauge_metrics "${reponame}"
     get_cvmfs_repo_proxy_metrics "${reponame}"
 }
 
