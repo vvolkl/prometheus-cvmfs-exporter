@@ -2,18 +2,16 @@
 
 A Prometheus exporter for monitoring CernVM File System (CVMFS) clients. This tool collects comprehensive metrics from CVMFS repositories and exposes them in Prometheus format for monitoring and alerting.
 
+Other exporters for CVMFS exist - this one was written to have a lightweight package without dependencies (in particular python). If you don't mind python, you could also take a look at https://github.com/guilbaults/cvmfs-exporter. Thanks to Simon Guilbaults for inspiration of this exporter, and having reserved port 9868 for CVMFS!
+
 ## Overview
 
 The prometheus-cvmfs-exporter provides detailed insights into CVMFS client performance, cache utilization, network activity, and system resource usage. It supports both standalone execution and systemd service deployment with socket activation.
 
-## Features
+### Features
 
 - **Comprehensive Metrics**: Collects 20+ different CVMFS metrics per repository
 - **Multi-Repository Support**: Automatically discovers and monitors all mounted CVMFS repositories
-- **Flexible Discovery**: Supports both standard (`findmnt`) and non-standard (`cvmfs_config`) repository discovery
-- **HTTP Server Mode**: Built-in HTTP server with socket activation support
-- **Systemd Integration**: Ready-to-use systemd service and socket files
-- **Cross-Platform Packaging**: Available as both RPM and DEB packages
 
 ## Installation
 
