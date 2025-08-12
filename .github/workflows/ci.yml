@@ -172,7 +172,7 @@ jobs:
           dnf install -y cvmfs cvmfs-config-default
 
           # Install build tools and dependencies
-          dnf install -y \
+          dnf install -y  --allowerasing \
             rpm-build \
             make \
             systemd \
