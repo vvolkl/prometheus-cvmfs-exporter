@@ -431,8 +431,69 @@ postprocess_metrics_for_2132() {
 
     # Process the TMPFILE line by line to rename metrics
     while IFS= read -r line; do
-        # Skip empty lines and comments
-        if [[ -z "$line" || "$line" =~ ^# ]]; then
+        # Skip empty lines
+        if [[ -z "$line" ]]; then
+            echo "$line" >> "$tmpfile_new"
+            continue
+        fi
+
+        # Process HELP and TYPE comments to rename metric names within them
+        if [[ "$line" =~ ^#\ (HELP|TYPE) ]]; then
+            # Apply the same renaming logic to metric names in HELP and TYPE comments
+            processed_line="$line"
+
+            # Cache metrics - rename to cvmfs_cache_*
+            processed_line="${processed_line//cvmfs_cached_bytes/cvmfs_cache_cached_bytes}"
+            processed_line="${processed_line//cvmfs_pinned_bytes/cvmfs_cache_pinned_bytes}"
+            processed_line="${processed_line//cvmfs_total_cache_size_bytes/cvmfs_cache_total_size_bytes}"
+            processed_line="${processed_line//cvmfs_physical_cache_size_bytes/cvmfs_cache_physical_size_bytes}"
+            processed_line="${processed_line//cvmfs_physical_cache_avail_bytes/cvmfs_cache_physical_avail_bytes}"
+            processed_line="${processed_line//cvmfs_hitrate/cvmfs_cache_hitrate}"
+            processed_line="${processed_line//cvmfs_ncleanup24/cvmfs_cache_ncleanup24}"
+
+            # Network metrics - rename to cvmfs_net_*
+            processed_line="${processed_line//cvmfs_rx_total/cvmfs_net_rx_total}"
+            processed_line="${processed_line//cvmfs_ndownload_total/cvmfs_net_ndownload_total}"
+            processed_line="${processed_line//cvmfs_speed/cvmfs_net_speed}"
+            processed_line="${processed_line//cvmfs_proxy/cvmfs_net_proxy}"
+            processed_line="${processed_line//cvmfs_active_proxy/cvmfs_net_active_proxy}"
+            processed_line="${processed_line//cvmfs_timeout_direct/cvmfs_net_timeout_direct}"
+            processed_line="${processed_line//cvmfs_timeout/cvmfs_net_timeout}"
+
+            # System resource metrics - rename to cvmfs_sys_*
+            processed_line="${processed_line//cvmfs_cpu_user_total/cvmfs_sys_cpu_user_total}"
+            processed_line="${processed_line//cvmfs_cpu_system_total/cvmfs_sys_cpu_system_total}"
+            processed_line="${processed_line//cvmfs_usedfd/cvmfs_sys_usedfd}"
+            processed_line="${processed_line//cvmfs_useddirp/cvmfs_sys_useddirp}"
+            processed_line="${processed_line//cvmfs_ndiropen/cvmfs_sys_ndiropen}"
+            processed_line="${processed_line//cvmfs_pid/cvmfs_sys_pid}"
+            processed_line="${processed_line//cvmfs_inode_max/cvmfs_sys_inode_max}"
+            processed_line="${processed_line//cvmfs_drainout_mode/cvmfs_sys_drainout_mode}"
+            processed_line="${processed_line//cvmfs_maintenance_mode/cvmfs_sys_maintenance_mode}"
+            processed_line="${processed_line//cvmfs_nfs_mode/cvmfs_sys_nfs_mode}"
+            processed_line="${processed_line//cvmfs_nioerr_total/cvmfs_sys_nioerr_total}"
+            processed_line="${processed_line//cvmfs_timestamp_last_ioerr/cvmfs_sys_timestamp_last_ioerr}"
+
+            # Repository metrics
+            processed_line="${processed_line//cvmfs_nclg/cvmfs_repo_nclg}"
+            processed_line="${processed_line//cvmfs_uptime_seconds/cvmfs_repo_uptime_seconds}"
+            processed_line="${processed_line//cvmfs_mount_epoch_timestamp/cvmfs_repo_mount_epoch_timestamp}"
+
+            # Internal affairs metrics - rename to cvmfs_internal_*
+            processed_line="${processed_line//cvmfs_pathstring/cvmfs_internal_pathstring}"
+            processed_line="${processed_line//cvmfs_namestring/cvmfs_internal_namestring}"
+            processed_line="${processed_line//cvmfs_linkstring/cvmfs_internal_linkstring}"
+            processed_line="${processed_line//cvmfs_inode_tracker/cvmfs_internal_inode_tracker}"
+            processed_line="${processed_line//cvmfs_dentry_tracker/cvmfs_internal_dentry_tracker}"
+            processed_line="${processed_line//cvmfs_page_cache_tracker/cvmfs_internal_page_cache_tracker}"
+            processed_line="${processed_line//cvmfs_sqlite/cvmfs_internal_sqlite}"
+
+            echo "$processed_line" >> "$tmpfile_new"
+            continue
+        fi
+
+        # Skip other comments
+        if [[ "$line" =~ ^# ]]; then
             echo "$line" >> "$tmpfile_new"
             continue
         fi
